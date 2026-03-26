@@ -15,3 +15,6 @@ cd echo-server
 qmake echoServer.pro
 make
 ./echoServer
+
+[вариант] [a] [b] [функция]
+1 1 2 112x^3 - x - 2
