@@ -21,8 +21,8 @@ make
 Пример задачи:
 1 1 2 112x^3 - x - 2
 
-Команды
-оманда	Описание
+
+Описание
 /reg user pass group	Регистрация
 /login user pass	Вход
 /history	История
