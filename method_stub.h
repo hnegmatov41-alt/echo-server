@@ -7,8 +7,11 @@ class MethodStub : public Method {
     int num;
 public:
     MethodStub(int n) : num(n) {}
-    QString execute(QString input) override {
-        return QString("Variant %1 not ready. Input: %2").arg(num).arg(input);
+    
+    // Изменено: принимает a, b и equation
+    QString execute(double a, double b, const QString& equation) override {
+        // a и b пока не используются, но они есть в сигнатуре
+        return QString("Variant %1 not ready. Equation: %2").arg(num).arg(equation);
     }
 };
 
