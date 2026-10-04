@@ -2,36 +2,49 @@
 #include <QStringList>
 #include <cmath>
 
-double eval1(QString func, double x) {
+// Функция для вычисления значения уравнения в точке x
+double eval1(const QString& func, double x) {
     if (func.contains("x^3")) return x * x * x - x - 2;
     if (func.contains("x^2")) return x * x - 4;
     if (func.contains("sin")) return sin(x);
     return 0;
 }
 
-QString Method1::execute(QString input) {
-    QStringList p = input.split(' ', Qt::SkipEmptyParts);
-    if (p.size() < 3) return "Error: need a b func";
+// Новая сигнатура: принимает a, b и equation
+QString Method1::execute(double a, double b, const QString& equation) {
+    
+    // Проверка: корень существует только если знаки на концах разные
+    double fa = eval1(equation, a);
+    double fb = eval1(equation, b);
 
-    bool ok1, ok2;
-    double a = p[0].toDouble(&ok1);
-    double b = p[1].toDouble(&ok2);
-    if (!ok1 || !ok2) return "Error: a,b must be numbers";
+    if (fa * fb > 0) {
+        return "Error: different signs required on ends of interval";
+    }
 
-    QString func;
-    for (int i = 2; i < p.size(); i++) func += p[i] + " ";
+    // Основной цикл метода половинного деления
+    double epsilon = 1e-6; // Точность
+    int maxIterations = 1000; // Защита от бесконечного цикла
+    double c = a;
 
-    double fa = eval1(func, a);
-    double fb = eval1(func, b);
+    for (int i = 0; i < maxIterations; i++) {
+        c = (a + b) / 2.0;
+        double fc = eval1(equation, c);
 
-    if (fa * fb > 0) return "Error: different signs required";
+        // Если значение функции близко к нулю или интервал стал очень маленьким
+        if (std::abs(fc) < epsilon || (b - a) / 2.0 < epsilon) {
+            break;
+        }
 
-    double c = (a + b) / 2;
-    double fc = eval1(func, c);
+        // Выбираем ту половину, где знаки разные
+        if (fa * fc < 0) {
+            b = c;
+            fb = fc;
+        } else {
+            a = c;
+            fa = fc;
+        }
+    }
 
-    double na, nb;
-    if (fa * fc < 0) { na = a; nb = c; }
-    else { na = c; nb = b; }
-
-    return QString("New interval: [%1, %2]").arg(na).arg(nb);
+    // Возвращаем найденный корень
+    return QString("Root: x ≈ %1").arg(c, 0, 'f', 6);
 }
