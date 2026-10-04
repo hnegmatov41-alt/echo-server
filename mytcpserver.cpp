@@ -2,6 +2,7 @@
 #include "database.h"
 #include "method_factory.h"
 #include <QDebug>
+#include <memory> // для unique_ptr
 
 MyTcpServer::MyTcpServer()
 {
@@ -28,6 +29,7 @@ void MyTcpServer::readData()
     QString data = QString::fromUtf8(s->readAll()).trimmed();
     qDebug() << "From" << users[s] << ":" << data;
 
+    // --- Команды ---
     if (data == "/help") {
         QString help = "\r\n COMMANDS \r\n";
         help += "/reg user pass group - register\r\n";
@@ -73,29 +75,46 @@ void MyTcpServer::readData()
         return;
     }
 
+    // --- Проверка авторизации ---
     if (users[s].isEmpty()) {
         sendTo(s, "Login first");
         return;
     }
 
+    // --- ПАРСИНГ ЗАДАЧИ (ИСПРАВЛЕНО) ---
     QStringList p = data.split(' ', Qt::SkipEmptyParts);
-    if (p.isEmpty()) return;
 
-    bool ok;
-    int v = p[0].toInt(&ok);
-    if (!ok) {
-        sendTo(s, "First must be number");
+    // Минимум должно быть 4 части: вариант, a, b и хотя бы один символ уравнения
+    if (p.size() < 4) {
+        sendTo(s, "Error: format is 'variant a b equation'. Example: 1 1 2 x^3 - x - 2");
         return;
     }
 
-    QString inp;
-    for (int i = 1; i < p.size(); i++) inp += p[i] + " ";
+    bool okVariant, okA, okB;
+    int variant = p[0].toInt(&okVariant);
+    double a = p[1].toDouble(&okA);
+    double b = p[2].toDouble(&okB);
 
-    Method* m = MethodFactory::get(v);
-    QString res = m->execute(inp);
-    delete m;
+    if (!okVariant || !okA || !okB) {
+        sendTo(s, "Error: variant, a and b must be numbers");
+        return;
+    }
 
-    Database::getInstance()->saveRequest(users[s], v, inp, res);
+    // Уравнение — это всё, что идёт после третьего элемента
+    QString equation = p.mid(3).join(' ');
+
+    // Используем unique_ptr для автоматического удаления
+    std::unique_ptr<Method> m(MethodFactory::get(variant));
+    if (!m) {
+        sendTo(s, "Error: unknown variant");
+        return;
+    }
+
+    // Передаём в метод границы и уравнение
+    QString res = m->execute(a, b, equation);
+
+    // Сохраняем запрос в БД (equation вместо inp)
+    Database::getInstance()->saveRequest(users[s], variant, equation, res);
     sendTo(s, res);
 }
 
