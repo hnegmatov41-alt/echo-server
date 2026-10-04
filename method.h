@@ -6,7 +6,8 @@
 class Method {
 public:
     virtual ~Method() {}
-    virtual QString execute(QString input) = 0;
+    // Изменено: теперь принимает границы и уравнение отдельно
+    virtual QString execute(double a, double b, const QString& equation) = 0;
 };
 
 #endif
