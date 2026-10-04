@@ -6,7 +6,8 @@
 
 class Method1 : public Method {
 public:
-    QString execute(QString input) override;
+    // Изменено: теперь принимает границы и уравнение
+    QString execute(double a, double b, const QString& equation) override;
 };
 
 #endif
